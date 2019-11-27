@@ -1,4 +1,6 @@
 
+forked from [mwarning/SimpleDNS](https://github.com/mwarning/SimpleDNS)
+
 ### Introduction
 
 SimpleDNS is a very simple DNS server.
@@ -71,6 +73,7 @@ cname.foo.bar.com.	3600	IN	CNAME	abc.efg.com.
 ;; SERVER: 127.0.0.1#9000(127.0.0.1)
 ;; WHEN: Wed Nov 27 02:08:28 CST 2019
 ;; MSG SIZE  rcvd: 77
+
 
 $ dig @127.0.0.1 -p 9000 mx.bar.com mx
 
