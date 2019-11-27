@@ -9,7 +9,7 @@ Features:
 * single-threaded
 * all necessary data structures for further features
 * very simplistic memory management
-* supports A, AAAA, TXT and CNAME queries
+* supports A, AAAA, TXT, CNAME and MX queries
 * no full protection against malformed requests :|
 
 ### Build
@@ -71,6 +71,26 @@ cname.foo.bar.com.	3600	IN	CNAME	abc.efg.com.
 ;; SERVER: 127.0.0.1#9000(127.0.0.1)
 ;; WHEN: Wed Nov 27 02:08:28 CST 2019
 ;; MSG SIZE  rcvd: 77
+
+$ dig @127.0.0.1 -p 9000 mx.bar.com mx
+
+; <<>> DiG 9.11.3-1ubuntu1.11-Ubuntu <<>> @127.0.0.1 -p 9000 mx.bar.com mx
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 63870
+;; flags: qr; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;mx.bar.com.			IN	MX
+
+;; ANSWER SECTION:
+mx.bar.com.		3600	IN	MX	1 abc.efg.com.
+
+;; Query time: 0 msec
+;; SERVER: 127.0.0.1#9000(127.0.0.1)
+;; WHEN: Wed Nov 27 23:39:41 CST 2019
+;; MSG SIZE  rcvd: 65
 ```
 
 Note:

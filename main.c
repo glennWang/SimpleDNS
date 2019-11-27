@@ -239,9 +239,22 @@ int get_TXT_Record(char **addr, const char domain_name[])
 
 int get_CNAME_Record(char **name, const char domain_name[])
 {
-  if (strcmp("cname.foo.bar.com", domain_name) == 0)
+  if (strcmp("mx.bar.com", domain_name) == 0)
   {
     *name = "abc.efg.com";
+    return 0;
+  }
+  else
+  {
+    return -1;
+  }
+}
+
+int get_MX_Record(char **exchange, const char domain_name[])
+{
+  if (strcmp("mx.bar.com", domain_name) == 0)
+  {
+    *exchange = "abc.efg.com";
     return 0;
   }
   else
@@ -624,13 +637,21 @@ void resolver_process(struct Message* msg)
         }
         rr->rd_length = strlen(rr->rd_data.cname_record.name) + 2;
         break;
+      case MX_Resource_RecordType:
+        rc = get_MX_Record(&(rr->rd_data.mx_record.exchange), q->qName);
+        if (rc < 0)
+        {
+          free(rr->name);
+          free(rr);
+          goto next;
+        }
+        rr->rd_length = strlen(rr->rd_data.mx_record.exchange) + 4;
+        rr->rd_data.mx_record.preference = 0x01;
+        break;
       /*
       case NS_Resource_RecordType:
-      case CNAME_Resource_RecordType:
       case SOA_Resource_RecordType:
       case PTR_Resource_RecordType:
-      case MX_Resource_RecordType:
-      case TXT_Resource_RecordType:
       */
       default:
         free(rr);
@@ -684,6 +705,10 @@ int encode_resource_records(struct ResourceRecord* rr, uint8_t** buffer)
         break;
       case CNAME_Resource_RecordType:
         encode_domain_name(buffer, rr->rd_data.cname_record.name);
+        break;
+      case MX_Resource_RecordType:
+        put16bits(buffer, rr->rd_data.mx_record.preference);
+        encode_domain_name(buffer, rr->rd_data.mx_record.exchange);
         break;
       default:
         fprintf(stderr, "Unknown type %u. => Ignore resource record.\n", rr->type);
