@@ -226,7 +226,7 @@ int get_AAAA_Record(uint8_t addr[16], const char domain_name[])
 
 int get_TXT_Record(char **addr, const char domain_name[])
 {
-  if (strcmp("foo.bar.com", domain_name) == 0)
+  if (strcmp("txt.bar.com", domain_name) == 0)
   {
     *addr = "abcdefg";
     return 0;
@@ -239,7 +239,7 @@ int get_TXT_Record(char **addr, const char domain_name[])
 
 int get_CNAME_Record(char **name, const char domain_name[])
 {
-  if (strcmp("mx.bar.com", domain_name) == 0)
+  if (strcmp("cname.bar.com", domain_name) == 0)
   {
     *name = "abc.efg.com";
     return 0;
@@ -255,6 +255,20 @@ int get_MX_Record(char **exchange, const char domain_name[])
   if (strcmp("mx.bar.com", domain_name) == 0)
   {
     *exchange = "abc.efg.com";
+    return 0;
+  }
+  else
+  {
+    return -1;
+  }
+}
+
+int get_SOA_Record(char **MName, char **RName,const char domain_name[])
+{
+  if (strcmp("soa.bar.com", domain_name) == 0)
+  {
+    *MName = "ns.xxx.com";
+    *RName = "admin.xxx.com";
     return 0;
   }
   else
@@ -586,7 +600,7 @@ void resolver_process(struct Message* msg)
     rr->name = strdup(q->qName);
     rr->type = q->qType;
     rr->class = q->qClass;
-    rr->ttl = 60*60; // in seconds; 0 means no caching
+    rr->ttl = 60*60; // 60*60 in seconds; 0 means no caching
 
     printf("Query for '%s'\n", q->qName);
 
@@ -635,7 +649,7 @@ void resolver_process(struct Message* msg)
           free(rr);
           goto next;
         }
-        rr->rd_length = strlen(rr->rd_data.cname_record.name) + 2;
+        rr->rd_length = strlen(rr->rd_data.cname_record.name) + 2; // 1: name length; 1: 0x00 end
         break;
       case MX_Resource_RecordType:
         rc = get_MX_Record(&(rr->rd_data.mx_record.exchange), q->qName);
@@ -648,9 +662,25 @@ void resolver_process(struct Message* msg)
         rr->rd_length = strlen(rr->rd_data.mx_record.exchange) + 4;
         rr->rd_data.mx_record.preference = 0x01;
         break;
+      case SOA_Resource_RecordType:
+        rc = get_SOA_Record(&(rr->rd_data.soa_record.MName),&(rr->rd_data.soa_record.RName), q->qName);
+        if (rc < 0)
+        {
+          free(rr->name);
+          free(rr);
+          goto next;
+        }
+        rr->rd_data.soa_record.serial = 0x01;
+        rr->rd_data.soa_record.refresh = 0x02;
+        rr->rd_data.soa_record.retry = 0x03;
+        rr->rd_data.soa_record.expire = 0x04;
+        rr->rd_data.soa_record.minimum = 0x05;
+        rr->rd_length = strlen(rr->rd_data.soa_record.MName) + strlen(rr->rd_data.soa_record.RName) + 4 + 4 * 5;
+      break;
+
       /*
       case NS_Resource_RecordType:
-      case SOA_Resource_RecordType:
+      
       case PTR_Resource_RecordType:
       */
       default:
@@ -710,6 +740,18 @@ int encode_resource_records(struct ResourceRecord* rr, uint8_t** buffer)
         put16bits(buffer, rr->rd_data.mx_record.preference);
         encode_domain_name(buffer, rr->rd_data.mx_record.exchange);
         break;
+      case SOA_Resource_RecordType:
+        encode_domain_name(buffer, rr->rd_data.soa_record.MName);
+        encode_domain_name(buffer, rr->rd_data.soa_record.RName);
+
+        put32bits(buffer, rr->rd_data.soa_record.serial);
+        put32bits(buffer, rr->rd_data.soa_record.refresh);
+        put32bits(buffer, rr->rd_data.soa_record.retry);
+        put32bits(buffer, rr->rd_data.soa_record.expire);
+        put32bits(buffer, rr->rd_data.soa_record.minimum);
+
+      break;
+
       default:
         fprintf(stderr, "Unknown type %u. => Ignore resource record.\n", rr->type);
       return 1;

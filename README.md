@@ -54,25 +54,46 @@ foo.bar.com.            0       IN      A       192.168.1.1
 ;; MSG SIZE  rcvd: 56
 
 
-$ dig @127.0.0.1 -p 9000 cname.foo.bar.com CNAME
+$dig @127.0.0.1 -p 9000 txt.bar.com txt
 
-; <<>> DiG 9.11.3-1ubuntu1.11-Ubuntu <<>> @127.0.0.1 -p 9000 cname.foo.bar.com cname
+; <<>> DiG 9.11.3-1ubuntu1.11-Ubuntu <<>> @127.0.0.1 -p 9000 txt.bar.com txt
 ; (1 server found)
 ;; global options: +cmd
 ;; Got answer:
-;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 37182
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 29325
 ;; flags: qr; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
 
 ;; QUESTION SECTION:
-;cname.foo.bar.com.		IN	CNAME
+;txt.bar.com.			IN	TXT
 
 ;; ANSWER SECTION:
-cname.foo.bar.com.	3600	IN	CNAME	abc.efg.com.
+txt.bar.com.		3600	IN	TXT	"abcdefg"
 
-;; Query time: 0 msec
+;; Query time: 1 msec
 ;; SERVER: 127.0.0.1#9000(127.0.0.1)
-;; WHEN: Wed Nov 27 02:08:28 CST 2019
-;; MSG SIZE  rcvd: 77
+;; WHEN: Tue Dec 10 00:20:43 CST 2019
+;; MSG SIZE  rcvd: 60
+
+
+$ dig @127.0.0.1 -p 9000 cname.bar.com cname
+
+; <<>> DiG 9.11.3-1ubuntu1.11-Ubuntu <<>> @127.0.0.1 -p 9000 cname.bar.com cname
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 8873
+;; flags: qr; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;cname.bar.com.			IN	CNAME
+
+;; ANSWER SECTION:
+cname.bar.com.		3600	IN	CNAME	abc.efg.com.
+
+;; Query time: 24 msec
+;; SERVER: 127.0.0.1#9000(127.0.0.1)
+;; WHEN: Tue Dec 10 00:21:38 CST 2019
+;; MSG SIZE  rcvd: 69
 
 
 $ dig @127.0.0.1 -p 9000 mx.bar.com mx
@@ -94,6 +115,28 @@ mx.bar.com.		3600	IN	MX	1 abc.efg.com.
 ;; SERVER: 127.0.0.1#9000(127.0.0.1)
 ;; WHEN: Wed Nov 27 23:39:41 CST 2019
 ;; MSG SIZE  rcvd: 65
+
+
+$ dig @127.0.0.1 -p 9000 soa.bar.com soa
+
+; <<>> DiG 9.11.3-1ubuntu1.11-Ubuntu <<>> @127.0.0.1 -p 9000 soa.bar.com soa
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 61557
+;; flags: qr; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;soa.bar.com.			IN	SOA
+
+;; ANSWER SECTION:
+soa.bar.com.		3600	IN	SOA	ns.xxx.com. admin.xxx.com. 1 2 3 4 5
+
+;; Query time: 1 msec
+;; SERVER: 127.0.0.1#9000(127.0.0.1)
+;; WHEN: Tue Dec 10 00:22:17 CST 2019
+;; MSG SIZE  rcvd: 99
+
 ```
 
 Note:
