@@ -11,7 +11,7 @@ Features:
 * single-threaded
 * all necessary data structures for further features
 * very simplistic memory management
-* supports A, AAAA, TXT, CNAME and MX queries
+* supports A, AAAA, TXT, CNAME, MX, SOA and NS queries
 * no full protection against malformed requests :|
 
 ### Build
@@ -136,6 +136,27 @@ soa.bar.com.		3600	IN	SOA	ns.xxx.com. admin.xxx.com. 1 2 3 4 5
 ;; SERVER: 127.0.0.1#9000(127.0.0.1)
 ;; WHEN: Tue Dec 10 00:22:17 CST 2019
 ;; MSG SIZE  rcvd: 99
+
+
+$ dig @127.0.0.1 -p 9000 bar.com ns
+
+; <<>> DiG 9.11.3-1ubuntu1.11-Ubuntu <<>> @127.0.0.1 -p 9000 bar.com ns
+; (1 server found)
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 30463
+;; flags: qr; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 0
+
+;; QUESTION SECTION:
+;bar.com.			IN	NS
+
+;; ANSWER SECTION:
+bar.com.		3600	IN	NS	ns1.abc.com.
+
+;; Query time: 0 msec
+;; SERVER: 127.0.0.1#9000(127.0.0.1)
+;; WHEN: Wed Dec 11 00:47:39 CST 2019
+;; MSG SIZE  rcvd: 57
 
 ```
 

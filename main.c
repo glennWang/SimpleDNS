@@ -277,6 +277,19 @@ int get_SOA_Record(char **MName, char **RName,const char domain_name[])
   }
 }
 
+int get_NS_Record(char **name, const char domain_name[])
+{
+  if (strcmp("bar.com", domain_name) == 0)
+  {
+    *name = "ns1.abc.com";
+    return 0;
+  }
+  else
+  {
+    return -1;
+  }
+}
+
 /*
 * Debugging functions.
 */
@@ -677,10 +690,20 @@ void resolver_process(struct Message* msg)
         rr->rd_data.soa_record.minimum = 0x05;
         rr->rd_length = strlen(rr->rd_data.soa_record.MName) + strlen(rr->rd_data.soa_record.RName) + 4 + 4 * 5;
       break;
-
-      /*
       case NS_Resource_RecordType:
-      
+        rc = get_NS_Record(&(rr->rd_data.name_server_record.name), q->qName);
+        if (rc < 0)
+        {
+          free(rr->name);
+          free(rr);
+          goto next;
+        }
+        rr->rd_length = strlen(rr->rd_data.name_server_record.name) + 2; // 1: name length; 1: 0x00 end
+        break;
+
+      break;
+
+      /*      
       case PTR_Resource_RecordType:
       */
       default:
@@ -743,14 +766,15 @@ int encode_resource_records(struct ResourceRecord* rr, uint8_t** buffer)
       case SOA_Resource_RecordType:
         encode_domain_name(buffer, rr->rd_data.soa_record.MName);
         encode_domain_name(buffer, rr->rd_data.soa_record.RName);
-
         put32bits(buffer, rr->rd_data.soa_record.serial);
         put32bits(buffer, rr->rd_data.soa_record.refresh);
         put32bits(buffer, rr->rd_data.soa_record.retry);
         put32bits(buffer, rr->rd_data.soa_record.expire);
         put32bits(buffer, rr->rd_data.soa_record.minimum);
-
-      break;
+        break;
+      case NS_Resource_RecordType:
+        encode_domain_name(buffer, rr->rd_data.name_server_record.name);
+        break;
 
       default:
         fprintf(stderr, "Unknown type %u. => Ignore resource record.\n", rr->type);
