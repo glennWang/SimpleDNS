@@ -613,7 +613,7 @@ void resolver_process(struct Message* msg)
     rr->name = strdup(q->qName);
     rr->type = q->qType;
     rr->class = q->qClass;
-    rr->ttl = 60*60; // 60*60 in seconds; 0 means no caching
+    rr->ttl = 0x11FF; // 60*60 in seconds; 0 means no caching
 
     printf("Query for '%s'\n", q->qName);
 
@@ -735,7 +735,12 @@ int encode_resource_records(struct ResourceRecord* rr, uint8_t** buffer)
   while (rr)
   {
     // Answer questions by attaching resource sections.
-    encode_domain_name(buffer, rr->name);
+
+    // encode_domain_name(buffer, rr->name);
+    
+    //  compress answer name (same as query name)
+    put16bits(buffer, 0xC00C);
+
     put16bits(buffer, rr->type);
     put16bits(buffer, rr->class);
     put32bits(buffer, rr->ttl);
