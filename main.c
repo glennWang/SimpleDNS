@@ -196,6 +196,50 @@ int get_A_Record(uint8_t addr[4], const char domain_name[])
   }
 }
 
+int get_Multi_A_Record(struct ResourceRecord* rr, struct Question* q, const char domain_name[])
+{
+
+  if (strcmp("foo.bar.com", domain_name) == 0)
+  {
+    rr->rd_length = 4;
+    // rr->rd_data.a_record.ttl = 0x11FF;
+
+    rr->rd_data.a_record.addr[0] = 192;
+    rr->rd_data.a_record.addr[1] = 168;
+    rr->rd_data.a_record.addr[2] = 1;
+    rr->rd_data.a_record.addr[3] = 3;
+
+    struct ResourceRecord* rr2;
+    rr2 = malloc(sizeof(struct ResourceRecord));
+    memset(rr2, 0, sizeof(struct ResourceRecord));
+
+    rr2->name = strdup(q->qName);
+    rr2->type = q->qType;
+    rr2->class = q->qClass;
+    rr2->ttl = 0x11FF; 
+
+    rr2->rd_length = 4;
+
+    rr2->rd_data.a_record.addr[0] = 192;
+    rr2->rd_data.a_record.addr[1] = 168;
+    rr2->rd_data.a_record.addr[2] = 1;
+    rr2->rd_data.a_record.addr[3] = 2;
+
+
+    printf("\n🍁--1---rr->next: %p\n", rr->next);
+
+    rr->next = rr2;
+
+    printf("🍁--2---rr->next: %p\n", rr->next);
+
+    return 0;
+  }
+  else
+  {
+    return -1;
+  }
+}
+
 int get_AAAA_Record(uint8_t addr[16], const char domain_name[])
 {
   if (strcmp("foo.bar.com", domain_name) == 0)
@@ -376,6 +420,9 @@ void print_resource_record(struct ResourceRecord* rr)
         printf("Unknown Resource Record { ??? }");
     }
     printf("}\n");
+
+    printf("🍁--3---rr->next: %p\n", rr->next);
+
     rr = rr->next;
   }
 }
@@ -623,9 +670,23 @@ void resolver_process(struct Message* msg)
     // This behavior is probably non-standard!
     switch (q->qType)
     {
+      // case A_Resource_RecordType:
+      //   rr->rd_length = 4;
+
+      //   rc = get_A_Record(rr->rd_data.a_record.addr, q->qName);
+
+      //   if (rc < 0)
+      //   {
+      //     free(rr->name);
+      //     free(rr);
+      //     goto next;
+      //   }
+      //   break;
+
       case A_Resource_RecordType:
-        rr->rd_length = 4;
-        rc = get_A_Record(rr->rd_data.a_record.addr, q->qName);
+
+        rc = get_Multi_A_Record(rr, q, q->qName);
+
         if (rc < 0)
         {
           free(rr->name);
@@ -726,11 +787,15 @@ void resolver_process(struct Message* msg)
     // process next question
     q = q->next;
   }
+
+  printf("🍁 --------- msg->anCount: %d\n", msg->anCount);
 }
 
 /* @return 0 upon failure, 1 upon success */
 int encode_resource_records(struct ResourceRecord* rr, uint8_t** buffer)
 {
+  int tmp_Count = 0;
+
   int i;
   while (rr)
   {
@@ -748,9 +813,16 @@ int encode_resource_records(struct ResourceRecord* rr, uint8_t** buffer)
 
     switch (rr->type)
     {
+      // case A_Resource_RecordType:
+      //   for(i = 0; i < 4; ++i)
+      //     put8bits(buffer, rr->rd_data.a_record.addr[i]);
+      //   break;
+
       case A_Resource_RecordType:
         for(i = 0; i < 4; ++i)
           put8bits(buffer, rr->rd_data.a_record.addr[i]);
+
+        printf("🍎-----addr: %d.%d.%d.%d\n", rr->rd_data.a_record.addr[0], rr->rd_data.a_record.addr[1], rr->rd_data.a_record.addr[2], rr->rd_data.a_record.addr[3]);
         break;
       case AAAA_Resource_RecordType:
         for(i = 0; i < 16; ++i)
@@ -787,7 +859,11 @@ int encode_resource_records(struct ResourceRecord* rr, uint8_t** buffer)
     }
 
     rr = rr->next;
+
+    tmp_Count++;
   }
+
+  printf("🍁--------------tmp_Count: %d\n", tmp_Count);
 
   return 0;
 }
