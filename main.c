@@ -653,10 +653,9 @@ void resolver_process(struct Message* msg)
   // for every question append resource records
   q = msg->questions;
   
-  uint16_t j = 0;
+  // uint16_t j = 0;
 
-  // while (q)
-  for (j = 0; j < msg->qdCount; j++)
+  while (q)
   {
     rr = malloc(sizeof(struct ResourceRecord));
     memset(rr, 0, sizeof(struct ResourceRecord));
