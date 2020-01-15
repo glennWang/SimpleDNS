@@ -216,7 +216,7 @@ int get_Multi_A_Record(struct ResourceRecord* rr, struct Question* q, const char
     rr2->name = strdup(q->qName);
     rr2->type = q->qType;
     rr2->class = q->qClass;
-    rr2->ttl = 0x11FF; 
+    rr2->ttl = 0x110F; 
 
     rr2->rd_length = 4;
 
@@ -634,7 +634,7 @@ int decode_msg(struct Message* msg, const uint8_t* buffer, int size)
 // in either section 'answers', 'authorities' or 'additionals'.
 void resolver_process(struct Message* msg)
 {
-  struct ResourceRecord* beg;
+  // struct ResourceRecord* beg;
   struct ResourceRecord* rr;
   struct Question* q;
   int rc;
@@ -652,7 +652,11 @@ void resolver_process(struct Message* msg)
 
   // for every question append resource records
   q = msg->questions;
-  while (q)
+  
+  uint16_t j = 0;
+
+  // while (q)
+  for (j = 0; j < msg->qdCount; j++)
   {
     rr = malloc(sizeof(struct ResourceRecord));
     memset(rr, 0, sizeof(struct ResourceRecord));
@@ -686,6 +690,22 @@ void resolver_process(struct Message* msg)
       case A_Resource_RecordType:
 
         rc = get_Multi_A_Record(rr, q, q->qName);
+
+        msg->answers = rr;
+
+        while (rr)
+        {
+          msg->anCount++;
+
+          // prepend resource record to answers list
+          // beg = msg->answers;
+          // msg->answers = rr;
+          // rr->next = beg;
+
+          rr = rr->next;
+        }
+        
+
 
         if (rc < 0)
         {
@@ -774,12 +794,12 @@ void resolver_process(struct Message* msg)
         goto next;
     }
 
-    msg->anCount++;
+    // msg->anCount++;
 
-    // prepend resource record to answers list
-    beg = msg->answers;
-    msg->answers = rr;
-    rr->next = beg;
+    // // prepend resource record to answers list
+    // beg = msg->answers;
+    // msg->answers = rr;
+    // rr->next = beg;
 
     // jump here to omit question
     next:
@@ -822,7 +842,9 @@ int encode_resource_records(struct ResourceRecord* rr, uint8_t** buffer)
         for(i = 0; i < 4; ++i)
           put8bits(buffer, rr->rd_data.a_record.addr[i]);
 
-        printf("🍎-----addr: %d.%d.%d.%d\n", rr->rd_data.a_record.addr[0], rr->rd_data.a_record.addr[1], rr->rd_data.a_record.addr[2], rr->rd_data.a_record.addr[3]);
+        printf("\n🍎-----addr: %d.%d.%d.%d\n", rr->rd_data.a_record.addr[0], rr->rd_data.a_record.addr[1], rr->rd_data.a_record.addr[2], rr->rd_data.a_record.addr[3]);
+
+        
         break;
       case AAAA_Resource_RecordType:
         for(i = 0; i < 16; ++i)
@@ -863,7 +885,7 @@ int encode_resource_records(struct ResourceRecord* rr, uint8_t** buffer)
     tmp_Count++;
   }
 
-  printf("🍁--------------tmp_Count: %d\n", tmp_Count);
+  printf("\n🍁--------------tmp_Count: %d\n", tmp_Count);
 
   return 0;
 }
