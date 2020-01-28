@@ -196,43 +196,254 @@ int get_A_Record(uint8_t addr[4], const char domain_name[])
   }
 }
 
-int get_Multi_A_Record(struct ResourceRecord* rr, struct Question* q, const char domain_name[])
+typedef struct aa_record{
+  uint8_t addr[4];
+  uint32_t ttl;
+  char *view;
+} a_record;
+
+struct aaa_record{
+  uint8_t addr[4];
+  uint32_t ttl;
+  char *view;
+};
+
+typedef struct node{
+  a_record data;
+  struct node *next;
+} Node;
+
+a_record record_arr[] = {
+{
+  {192, 168, 1, 1},
+  0x11,
+  "hh"
+},
+{
+  {192, 168, 1, 2},
+  0x10,
+  "hh"
+  },
+}; 
+
+// a_record* get_My_A_Record(int* num,  const char domain_name[]){
+
+//   a_record record_arr[] = {
+//   {
+//     {192, 168, 1, 1},
+//     0x11,
+//     "hh"
+//   },
+//   {
+//     {192, 168, 1, 2},
+//     0x10,
+//     "hh"
+//     },
+//   }; 
+
+//   return record_arr;
+// }
+
+Node* get_My_A_Record2(int* num,  const char domain_name[]){
+
+  a_record record_arr[] = {
+  {
+    {192, 168, 1, 1},
+    0x11,
+    "hh"
+  },
+  {
+    {192, 168, 1, 2},
+    0x10,
+    "hh"
+    },
+  }; 
+
+  int length = sizeof(record_arr)/sizeof(record_arr[0]);
+
+  Node *head = (Node *)malloc(sizeof(Node));
+  if(head == NULL){
+    exit(-1);
+  }
+  head -> next = NULL;
+
+    // while(-1 != num)
+  for (int i = 0; i < length; i++)
+  {
+    Node *node = (Node*)malloc(sizeof(Node));
+
+    // node -> data -> ttl = record_arr[i].ttl;
+    // node -> data -> view = record_arr[i].view;
+    // (node -> data->addr)[0] = record_arr[i].addr[0];
+    // node -> data->addr[1] = record_arr[i].addr[1];
+    // node -> data->addr[2] = record_arr[i].addr[2];
+    // node -> data->addr[3] = record_arr[i].addr[3];
+
+
+    node -> data.ttl = record_arr[i].ttl;
+    node -> data.view = record_arr[i].view;
+    node -> data.addr[0] = record_arr[i].addr[0];
+    node -> data.addr[1] = record_arr[i].addr[1];
+    node -> data.addr[2] = record_arr[i].addr[2];
+    node -> data.addr[3] = record_arr[i].addr[3];
+
+    node -> next = head -> next;
+    head -> next = node;
+  }
+
+  return head;
+}
+
+
+int get_Multi_A_Record(struct ResourceRecord** rr, struct Question* q, const char domain_name[])
 {
 
   if (strcmp("foo.bar.com", domain_name) == 0)
   {
-    rr->rd_length = 4;
-    // rr->rd_data.a_record.ttl = 0x11FF;
+    a_record record_arr[] = {
+      {
+        {192, 168, 1, 1},
+        0x11,
+        "hh"
+      },
+      {
+        {192, 168, 1, 2},
+        0x10,
+        "hh"
+      },
+    }; 
 
-    rr->rd_data.a_record.addr[0] = 192;
-    rr->rd_data.a_record.addr[1] = 168;
-    rr->rd_data.a_record.addr[2] = 1;
-    rr->rd_data.a_record.addr[3] = 3;
+    int length = sizeof(record_arr)/sizeof(record_arr[0]);
+ 
 
-    struct ResourceRecord* rr2;
-    rr2 = malloc(sizeof(struct ResourceRecord));
-    memset(rr2, 0, sizeof(struct ResourceRecord));
+    struct ResourceRecord* rr_new;
+    rr_new = *rr;
 
-    rr2->name = strdup(q->qName);
-    rr2->type = q->qType;
-    rr2->class = q->qClass;
-    rr2->ttl = 0x110F; 
+    for (int i = 0; i < length; i++)
+    {
+/*
+      if(i == 0){
+        rr_new->name = strdup(q->qName);
+        rr_new->type = q->qType;
+        rr_new->class = q->qClass;
 
-    rr2->rd_length = 4;
+        rr_new->ttl = record_arr[i].ttl; 
 
-    rr2->rd_data.a_record.addr[0] = 192;
-    rr2->rd_data.a_record.addr[1] = 168;
-    rr2->rd_data.a_record.addr[2] = 1;
-    rr2->rd_data.a_record.addr[3] = 2;
+        rr_new->rd_length = 4;
+
+        rr_new->rd_data.a_record.addr[0] = record_arr[i].addr[0];
+        rr_new->rd_data.a_record.addr[1] = record_arr[i].addr[1];
+        rr_new->rd_data.a_record.addr[2] = record_arr[i].addr[2];
+        rr_new->rd_data.a_record.addr[3] = record_arr[i].addr[3];
+
+        rr_new->next = NULL;
+
+      } else
+      {
+
+        rr_new = malloc(sizeof(struct ResourceRecord));
+        memset(rr_new, 0, sizeof(struct ResourceRecord));
+
+        rr_new->name = strdup(q->qName);
+        rr_new->type = q->qType;
+        rr_new->class = q->qClass;
+
+        rr_new->ttl = record_arr[i].ttl; 
+
+        rr_new->rd_length = 4;
+
+        rr_new->rd_data.a_record.addr[0] = record_arr[i].addr[0];
+        rr_new->rd_data.a_record.addr[1] = record_arr[i].addr[1];
+        rr_new->rd_data.a_record.addr[2] = record_arr[i].addr[2];
+        rr_new->rd_data.a_record.addr[3] = record_arr[i].addr[3];
+
+        rr_new->next = NULL;
+
+        rr->next = rr_new;
+
+        rr = rr_new;
+      }
+      */
+
+      
+      rr_new = malloc(sizeof(struct ResourceRecord));
+      memset(rr_new, 0, sizeof(struct ResourceRecord));
+      
+
+      rr_new->name = strdup(q->qName);
+      rr_new->type = q->qType;
+      rr_new->class = q->qClass;
+
+      rr_new->ttl = record_arr[i].ttl; 
+
+      rr_new->rd_length = 4;
+
+      rr_new->rd_data.a_record.addr[0] = record_arr[i].addr[0];
+      rr_new->rd_data.a_record.addr[1] = record_arr[i].addr[1];
+      rr_new->rd_data.a_record.addr[2] = record_arr[i].addr[2];
+      rr_new->rd_data.a_record.addr[3] = record_arr[i].addr[3];
+
+      rr_new->next = NULL;
+
+      if(i > 0){
+        (*rr)->next = rr_new;
+        *rr = rr_new;
+      }
 
 
-    printf("\n🍁--1---rr->next: %p\n", rr->next);
+    }
 
-    rr->next = rr2;
+/*   
+    for (int i = 0; i < length; i++)
+    {
 
-    printf("🍁--2---rr->next: %p\n", rr->next);
+      if(i == 0){
+        rr->name = strdup(q->qName);
+        rr->type = q->qType;
+        rr->class = q->qClass;
 
-    return 0;
+        rr->ttl = record_arr[i].ttl; 
+
+        rr->rd_length = 4;
+
+        rr->rd_data.a_record.addr[0] = record_arr[i].addr[0];
+        rr->rd_data.a_record.addr[1] = record_arr[i].addr[1];
+        rr->rd_data.a_record.addr[2] = record_arr[i].addr[2];
+        rr->rd_data.a_record.addr[3] = record_arr[i].addr[3];
+
+        rr->next = NULL;
+
+      } else
+      {
+        struct ResourceRecord* rr2;
+        rr2 = malloc(sizeof(struct ResourceRecord));
+        memset(rr2, 0, sizeof(struct ResourceRecord));
+
+        rr2->name = strdup(q->qName);
+        rr2->type = q->qType;
+        rr2->class = q->qClass;
+
+        rr2->ttl = record_arr[i].ttl; 
+
+        rr2->rd_length = 4;
+
+        rr2->rd_data.a_record.addr[0] = record_arr[i].addr[0];
+        rr2->rd_data.a_record.addr[1] = record_arr[i].addr[1];
+        rr2->rd_data.a_record.addr[2] = record_arr[i].addr[2];
+        rr2->rd_data.a_record.addr[3] = record_arr[i].addr[3];
+
+        rr2->next = NULL;
+
+        rr->next = rr2;
+
+        rr = rr2;
+      }
+
+    }
+*/
+    printf("\n-------length: %d-----\n", length);
+
+    return length;
   }
   else
   {
@@ -657,15 +868,18 @@ void resolver_process(struct Message* msg)
 
   while (q)
   {
-    rr = malloc(sizeof(struct ResourceRecord));
-    memset(rr, 0, sizeof(struct ResourceRecord));
+    // rr = malloc(sizeof(struct ResourceRecord));
+    // memset(rr, 0, sizeof(struct ResourceRecord));
 
-    rr->name = strdup(q->qName);
-    rr->type = q->qType;
-    rr->class = q->qClass;
-    rr->ttl = 0x11FF; // 60*60 in seconds; 0 means no caching
+    // rr->name = strdup(q->qName);
+    // rr->type = q->qType;
+    // rr->class = q->qClass;
+    // rr->ttl = 0x11FF; // 60*60 in seconds; 0 means no caching
 
     printf("Query for '%s'\n", q->qName);
+
+    int t1 = 0;
+    // int length = 0;
 
     // We only can only answer two question types so far
     // and the answer (resource records) will be all put
@@ -687,24 +901,86 @@ void resolver_process(struct Message* msg)
       //   break;
 
       case A_Resource_RecordType:
+      {
 
-        rc = get_Multi_A_Record(rr, q, q->qName);
 
-        msg->answers = rr;
+        //  int length = sizeof(record_arr)/sizeof(record_arr[0]);
+        // int t1 = 0;
+        // a_record t2[] = get_My_A_Record(&t1, q->qName);
 
-        while (rr)
-        {
-          msg->anCount++;
+        // length = sizeof(t2)/sizeof(t2[0]);
+        // for (size_t i = 0; i < length; i++)
+        // {
+        //   printf(" ttl: %d; ip: %d.%d.%d.%d", t2[i].ttl, t2[i].addr[0], t2[i].addr[1],t2[i].addr[2],t2[i].addr[3]);
+        // }
 
-          // prepend resource record to answers list
-          // beg = msg->answers;
-          // msg->answers = rr;
-          // rr->next = beg;
+        //  新建
+         Node *head = get_My_A_Record2(&t1, q->qName);
+         Node *cur = head;
+         Node *head2 = head;
+         
+         while(cur->next != NULL){
+           cur = cur -> next;
+           printf("\n 遍历 ---ttl: %d; view: %s; ip: %d.%d.%d.%d\n", cur -> data.ttl, cur -> data.view, cur -> data.addr[0], cur -> data.addr[1], cur -> data.addr[2], cur -> data.addr[3]);
+         }
 
-          rr = rr->next;
+
+         //  释放
+        while(head != NULL){
+          cur = head->next;
+
+          // free(&((*head).data.view));
+
+          // free(&((*head).data.view));
+          head->data.view = NULL;
+          free(head);
+          head = cur;
         }
-        
 
+         cur = head2;
+         while(cur->next != NULL){
+           cur = cur -> next;
+           printf("\n 释放后 ---ttl: %d; view: %s; ip: %d.%d.%d.%d\n", cur -> data.ttl, cur -> data.view, cur -> data.addr[0], cur -> data.addr[1], cur -> data.addr[2], cur -> data.addr[3]);
+         }
+
+
+         for (int i = 0; i < 2; i++)
+         {
+           struct ResourceRecord* rr_new = malloc(sizeof(struct ResourceRecord));
+           memset(rr_new, 0, sizeof(struct ResourceRecord));
+      
+
+           rr_new->name = strdup(q->qName);
+           rr_new->type = q->qType;
+           rr_new->class = q->qClass;
+
+           rr_new->ttl = record_arr[i].ttl; 
+
+           rr_new->rd_length = 4;
+
+           rr_new->rd_data.a_record.addr[0] = record_arr[i].addr[0];
+           rr_new->rd_data.a_record.addr[1] = record_arr[i].addr[1];
+           rr_new->rd_data.a_record.addr[2] = record_arr[i].addr[2];
+           rr_new->rd_data.a_record.addr[3] = record_arr[i].addr[3];
+
+           rr_new->next = NULL;
+
+           if(i == 0){
+             rr = rr_new;
+             msg->answers = rr;
+           }
+
+           if(i > 0){
+             rr->next = rr_new;
+             rr = rr_new;
+           }
+
+         }
+
+        
+        msg->anCount = 2;
+
+        rc = 2;
 
         if (rc < 0)
         {
@@ -712,7 +988,9 @@ void resolver_process(struct Message* msg)
           free(rr);
           goto next;
         }
+      }
         break;
+/*
       case AAAA_Resource_RecordType:
         rr->rd_length = 16;
         rc = get_AAAA_Record(rr->rd_data.aaaa_record.addr, q->qName);
@@ -782,7 +1060,7 @@ void resolver_process(struct Message* msg)
         break;
 
       break;
-
+*/
       /*      
       case PTR_Resource_RecordType:
       */
