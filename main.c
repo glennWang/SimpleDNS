@@ -180,32 +180,16 @@ struct Message {
   struct ResourceRecord* additionals;
 };
 
-int get_A_Record(uint8_t addr[4], const char domain_name[])
-{
-  if (strcmp("foo.bar.com", domain_name) == 0)
-  {
-    addr[0] = 192;
-    addr[1] = 168;
-    addr[2] = 1;
-    addr[3] = 1;
-    return 0;
-  }
-  else
-  {
-    return -1;
-  }
-}
-
 typedef struct {
   uint8_t addr[4];
   uint32_t ttl;
   char view[20];
 } a_record;
 
-a_record* get_Multi_A_Record(int * rc, const char domain_name[]){
+a_record* get_A_Record(int16_t * rc, const char domain_name[]){
   // strcasecmp  不区分大小写
   // strcmp  区分大小写
-  if (strcmp("foo.bar.com", domain_name) == 0)
+  if (strcmp("a.bar.com", domain_name) == 0)
   {
     *rc = 3;
 
@@ -216,21 +200,21 @@ a_record* get_Multi_A_Record(int * rc, const char domain_name[]){
     p->addr[1] = 168;
     p->addr[2] = 71;
     p->addr[3] = 2;
-    strcpy(p->view, "jack");
+    strcpy(p->view, "ctc");
 
     (p + 1)->ttl = 0x12;
     (p + 1)->addr[0] = 192;
     (p + 1)->addr[1] = 168;
     (p + 1)->addr[2] = 71;
     (p + 1)->addr[3] = 3;
-    strcpy((p + 1)->view, "jack");
+    strcpy((p + 1)->view, "ctc");
 
     (p + 2)->ttl = 0x13;
     (p + 2)->addr[0] = 192;
     (p + 2)->addr[1] = 168;
     (p + 2)->addr[2] = 71;
     (p + 2)->addr[3] = 111;
-    strcpy((p + 2)->view, "jack");
+    strcpy((p + 2)->view, "cmc");
 
     return p;
   } else {
@@ -239,48 +223,100 @@ a_record* get_Multi_A_Record(int * rc, const char domain_name[]){
 
     return NULL;
   }
-
 }
 
+typedef struct {
+  uint8_t addr[16];
+  uint32_t ttl;
+  char view[20];
+} aaaa_record;
 
-int get_AAAA_Record(uint8_t addr[16], const char domain_name[])
+aaaa_record* get_AAAA_Record(int16_t * rc, const char domain_name[])
 {
-  if (strcmp("foo.bar.com", domain_name) == 0)
+  if (strcmp("aaaa.bar.com", domain_name) == 0)
   {
-    addr[0] = 0xfe;
-    addr[1] = 0x80;
-    addr[2] = 0x00;
-    addr[3] = 0x00;
-    addr[4] = 0x00;
-    addr[5] = 0x00;
-    addr[6] = 0x00;
-    addr[7] = 0x00;
-    addr[8] = 0x00;
-    addr[9] = 0x00;
-    addr[10] = 0x00;
-    addr[11] = 0x00;
-    addr[12] = 0x00;
-    addr[13] = 0x00;
-    addr[14] = 0x00;
-    addr[15] = 0x01;
-    return 0;
+    *rc = 2;
+
+    aaaa_record* p = calloc(*rc, sizeof(aaaa_record));
+
+    p->ttl = 0x14;
+    strcpy(p->view, "ctc");
+    p->addr[0] = 0xfe;
+    p->addr[1] = 0x80;
+    p->addr[2] = 0x00;
+    p->addr[3] = 0x00;
+    p->addr[4] = 0x00;
+    p->addr[5] = 0x00;
+    p->addr[6] = 0x00;
+    p->addr[7] = 0x00;
+    p->addr[8] = 0x00;
+    p->addr[9] = 0x00;
+    p->addr[10] = 0x00;
+    p->addr[11] = 0x00;
+    p->addr[12] = 0x00;
+    p->addr[13] = 0x00;
+    p->addr[14] = 0x00;
+    p->addr[15] = 0x01;
+
+    (p + 1)->ttl = 0x15;
+    strcpy((p + 1)->view, "ctc");
+    (p + 1)->addr[0] = 0xfe;
+    (p + 1)->addr[1] = 0x80;
+    (p + 1)->addr[2] = 0x00;
+    (p + 1)->addr[3] = 0x00;
+    (p + 1)->addr[4] = 0x00;
+    (p + 1)->addr[5] = 0x00;
+    (p + 1)->addr[6] = 0x00;
+    (p + 1)->addr[7] = 0x00;
+    (p + 1)->addr[8] = 0x00;
+    (p + 1)->addr[9] = 0x00;
+    (p + 1)->addr[10] = 0x00;
+    (p + 1)->addr[11] = 0x00;
+    (p + 1)->addr[12] = 0x00;
+    (p + 1)->addr[13] = 0x00;
+    (p + 1)->addr[14] = 0x00;
+    (p + 1)->addr[15] = 0x02;
+
+    return p;
   }
   else
   {
-    return -1;
+    *rc = -1;
+    return NULL;
   }
 }
 
-int get_TXT_Record(char **addr, const char domain_name[])
+typedef struct {
+  uint8_t txt_data_len;
+  char txt_data[255];
+  uint32_t ttl;
+  char view[20];
+} txt_record;
+
+txt_record* get_TXT_Record(int16_t * rc, const char domain_name[])
 {
   if (strcmp("txt.bar.com", domain_name) == 0)
   {
-    *addr = "abcdefg";
-    return 0;
+    *rc = 2;
+
+    txt_record* p = calloc(*rc, sizeof(txt_record));
+
+    p->ttl = 0x11;
+    strcpy(p->view, "ctc");
+    strcpy(p->txt_data, "12345");
+    p->txt_data_len = strlen(p->txt_data);
+    
+    (p + 1)->ttl = 0x12;
+    strcpy((p + 1)->view, "ctc");
+    strcpy((p + 1)->txt_data, "54321");
+    (p + 1)->txt_data_len = strlen((p + 1)->txt_data);
+
+    return p;
   }
   else
   {
-    return -1;
+    *rc = -1;
+    return NULL;
   }
 }
 
@@ -640,7 +676,7 @@ void resolver_process(struct Message* msg)
   // struct ResourceRecord* beg;
   struct ResourceRecord* rr;
   struct Question* q;
-  int rc;
+  int16_t rc;
 
   // leave most values intact for response
   msg->qr = 1; // this is a response
@@ -668,16 +704,12 @@ void resolver_process(struct Message* msg)
     // This behavior is probably non-standard!
     switch (q->qType)
     {
- 
       case A_Resource_RecordType:
-
       {
-        a_record* record_a_arr = get_Multi_A_Record(&rc, q->qName);
+        a_record* record_a_arr = get_A_Record(&rc, q->qName);
 
         if (rc <= 0)
         {
-          // free(rr->name);
-          // free(rr);
           goto next;
         }
 
@@ -720,26 +752,96 @@ void resolver_process(struct Message* msg)
       }
  
       case AAAA_Resource_RecordType:
-        rr->rd_length = 16;
-        rc = get_AAAA_Record(rr->rd_data.aaaa_record.addr, q->qName);
-        if (rc < 0)
+      {
+        aaaa_record* record_aaaa_arr = get_AAAA_Record(&rc, q->qName);
+
+        if (rc <= 0)
         {
-          free(rr->name);
-          free(rr);
           goto next;
         }
+
+        msg->anCount = rc;
+
+        for (int i = 0; i < rc; i++)
+        {
+          struct ResourceRecord* rr_new = (struct ResourceRecord*)calloc(1, sizeof(struct ResourceRecord));
+
+          rr_new->name = strdup(q->qName);
+          rr_new->type = q->qType;
+          rr_new->class = q->qClass;
+
+          rr_new->ttl = (record_aaaa_arr + i)->ttl; 
+
+          rr_new->rd_length = 16;
+
+          memcpy(rr_new->rd_data.aaaa_record.addr, (record_aaaa_arr + i)->addr, 16);
+
+          rr_new->next = NULL;
+
+          if(i == 0){
+            rr = rr_new;
+            msg->answers = rr;
+          }
+
+          if(i > 0){
+            rr->next = rr_new;
+            rr = rr_new;
+          }
+
+        }
+
+        free(record_aaaa_arr);
+        record_aaaa_arr = NULL;
+
         break;
+      }
       case TXT_Resource_RecordType:
-        rc = get_TXT_Record(&(rr->rd_data.txt_record.txt_data), q->qName);
-        if (rc < 0)
+      {
+        txt_record* record_txt_arr = get_TXT_Record(&rc, q->qName);
+
+        if (rc <= 0)
         {
-          free(rr->name);
-          free(rr);
           goto next;
         }
-        rr->rd_data.txt_record.txt_data_len = strlen(rr->rd_data.txt_record.txt_data);
-        rr->rd_length = strlen(rr->rd_data.txt_record.txt_data) + 1;
+
+        msg->anCount = rc;
+
+        for (int i = 0; i < rc; i++)
+        {
+          struct ResourceRecord* rr_new = (struct ResourceRecord*)calloc(1, sizeof(struct ResourceRecord));
+
+          rr_new->name = strdup(q->qName);
+          rr_new->type = q->qType;
+          rr_new->class = q->qClass;
+
+          rr_new->ttl = (record_txt_arr + i)->ttl; 
+
+          rr_new->rd_data.txt_record.txt_data = (char*)calloc((record_txt_arr + i)->txt_data_len, sizeof(char));
+          memcpy(rr_new->rd_data.txt_record.txt_data, (record_txt_arr + i)->txt_data, (record_txt_arr + i)->txt_data_len);
+
+          rr_new->rd_data.txt_record.txt_data_len = (record_txt_arr + i)->txt_data_len;
+
+          rr_new->rd_length = (record_txt_arr + i)->txt_data_len + 1; //  1: length
+
+          rr_new->next = NULL;
+
+          if(i == 0){
+            rr = rr_new;
+            msg->answers = rr;
+          }
+
+          if(i > 0){
+            rr->next = rr_new;
+            rr = rr_new;
+          }
+
+        }
+
+        free(record_txt_arr);
+        record_txt_arr = NULL;
+
         break;
+      }
       case CNAME_Resource_RecordType:
         rc = get_CNAME_Record(&(rr->rd_data.cname_record.name), q->qName);
         if (rc < 0)
@@ -928,6 +1030,13 @@ void free_resource_records(struct ResourceRecord* rr)
   struct ResourceRecord* next;
 
   while (rr) {
+
+    if(rr->type == TXT_Resource_RecordType)
+    {
+      free(rr->rd_data.txt_record.txt_data);
+      rr->rd_data.txt_record.txt_data = NULL;
+    }
+
     free(rr->name);
     next = rr->next;
     free(rr);
@@ -1349,3 +1458,63 @@ int main()
 // }
 
 
+
+// int get_A_Record(uint8_t addr[4], const char domain_name[])
+// {
+//   if (strcmp("foo.bar.com", domain_name) == 0)
+//   {
+//     addr[0] = 192;
+//     addr[1] = 168;
+//     addr[2] = 1;
+//     addr[3] = 1;
+//     return 0;
+//   }
+//   else
+//   {
+//     return -1;
+//   }
+// }
+
+
+
+// int get_AAAA_Record(uint8_t addr[16], const char domain_name[])
+// {
+//   if (strcmp("foo.bar.com", domain_name) == 0)
+//   {
+//     addr[0] = 0xfe;
+//     addr[1] = 0x80;
+//     addr[2] = 0x00;
+//     addr[3] = 0x00;
+//     addr[4] = 0x00;
+//     addr[5] = 0x00;
+//     addr[6] = 0x00;
+//     addr[7] = 0x00;
+//     addr[8] = 0x00;
+//     addr[9] = 0x00;
+//     addr[10] = 0x00;
+//     addr[11] = 0x00;
+//     addr[12] = 0x00;
+//     addr[13] = 0x00;
+//     addr[14] = 0x00;
+//     addr[15] = 0x01;
+//     return 0;
+//   }
+//   else
+//   {
+//     return -1;
+//   }
+// }
+
+
+// int get_TXT_Record(char **addr, const char domain_name[])
+// {
+//   if (strcmp("txt.bar.com", domain_name) == 0)
+//   {
+//     *addr = "abcdefg";
+//     return 0;
+//   }
+//   else
+//   {
+//     return -1;
+//   }
+// }
