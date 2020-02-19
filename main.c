@@ -320,56 +320,149 @@ txt_record* get_TXT_Record(int16_t * rc, const char domain_name[])
   }
 }
 
-int get_CNAME_Record(char **name, const char domain_name[])
+typedef struct {
+  uint8_t name_len;
+  char name[253];  //  每一级域名长度的限制是63个字符, 域名总长度不能超过253个字符
+  uint32_t ttl;
+  char view[20];
+} cname_record;
+
+cname_record* get_CNAME_Record(int16_t * rc, const char domain_name[])
 {
   if (strcmp("cname.bar.com", domain_name) == 0)
   {
-    *name = "abc.efg.com";
-    return 0;
+    *rc = 1;
+
+    cname_record* p = calloc(*rc, sizeof(cname_record));
+
+    p->ttl = 0x13;
+    strcpy(p->view, "ctc");
+    strcpy(p->name, "abc.efg.com");
+    p->name_len = strlen(p->name);
+
+    return p;
   }
   else
   {
-    return -1;
+    *rc = -1;
+    return NULL;
   }
 }
 
-int get_MX_Record(char **exchange, const char domain_name[])
+typedef struct {
+  uint8_t exchange_len;
+  char exchange[253];  //  每一级域名长度的限制是63个字符, 域名总长度不能超过253个字符
+  uint16_t preference;
+  uint32_t ttl;
+  char view[20];
+} mx_record;
+
+mx_record* get_MX_Record(int16_t * rc, const char domain_name[])
 {
   if (strcmp("mx.bar.com", domain_name) == 0)
   {
-    *exchange = "abc.efg.com";
-    return 0;
+    *rc = 2;
+
+    mx_record* p = calloc(*rc, sizeof(mx_record));
+
+    p->ttl = 0x14;
+    p->preference = 0x0a;
+    strcpy(p->view, "ctc");
+    strcpy(p->exchange, "aaa.efg.com");
+    p->exchange_len = strlen(p->exchange);
+
+    (p + 1)->ttl = 0x14;
+    (p + 1)->preference = 0x0a;
+    strcpy((p + 1)->view, "ctc");
+    strcpy((p + 1)->exchange, "bbb.efg.com");
+    (p + 1)->exchange_len = strlen(p->exchange);
+
+    return p;
   }
   else
   {
-    return -1;
+    *rc = -1;
+    return NULL;
   }
 }
 
-int get_SOA_Record(char **MName, char **RName,const char domain_name[])
+typedef struct {
+  uint8_t MName_len;
+  char MName[253];  //  每一级域名长度的限制是63个字符, 域名总长度不能超过253个字符
+  uint8_t RName_len;
+  char RName[253];  //  每一级域名长度的限制是63个字符, 域名总长度不能超过253个字符
+  uint32_t serial;
+  uint32_t refresh;
+  uint32_t retry;
+  uint32_t expire;
+  uint32_t minimum;
+  uint32_t ttl;
+  char view[20];
+} soa_record;
+
+soa_record* get_SOA_Record(int16_t *rc, const char domain_name[])
 {
   if (strcmp("soa.bar.com", domain_name) == 0)
   {
-    *MName = "ns.xxx.com";
-    *RName = "admin.xxx.com";
-    return 0;
+    *rc = 1;
+
+    soa_record* p = calloc(*rc, sizeof(soa_record));
+
+    strcpy(p->MName, "ns.xxx.com");
+    p->MName_len = strlen(p->MName);
+
+    strcpy(p->RName, "admin.xxx.com");
+    p->RName_len = strlen(p->RName);
+
+    p->serial = 0x01;
+    p->refresh = 0x02;
+    p->retry = 0x03;
+    p->expire = 0x04;
+    p->minimum = 0x05;
+
+    p->ttl = 0x14;
+    strcpy(p->view, "ctc");
+
+    return p;
   }
   else
   {
-    return -1;
+    *rc = -1;
+    return NULL;
   }
 }
 
-int get_NS_Record(char **name, const char domain_name[])
+typedef struct {
+  uint8_t name_len;
+  char name[253];  //  每一级域名长度的限制是63个字符, 域名总长度不能超过253个字符
+  uint32_t ttl;
+  char view[20];
+} ns_record;
+
+ns_record* get_NS_Record(int16_t *rc, const char domain_name[])
 {
   if (strcmp("bar.com", domain_name) == 0)
   {
-    *name = "ns1.abc.com";
-    return 0;
+    *rc = 2;
+
+    ns_record* p = calloc(*rc, sizeof(ns_record));
+
+    p->ttl = 0x13;
+    strcpy(p->view, "ctc");
+    strcpy(p->name, "ns1.abc.com");
+    p->name_len = strlen(p->name);
+
+    (p + 1)->ttl = 0x13;
+    strcpy((p + 1)->view, "ctc");
+    strcpy((p + 1)->name, "ns2.abc.com");
+    (p + 1)->name_len = strlen((p + 1)->name);
+
+    return p;
   }
   else
   {
-    return -1;
+    *rc = -1;
+    return NULL;
   }
 }
 
@@ -736,9 +829,7 @@ void resolver_process(struct Message* msg)
           if(i == 0){
             rr = rr_new;
             msg->answers = rr;
-          }
-
-          if(i > 0){
+          } else {
             rr->next = rr_new;
             rr = rr_new;
           }
@@ -781,9 +872,7 @@ void resolver_process(struct Message* msg)
           if(i == 0){
             rr = rr_new;
             msg->answers = rr;
-          }
-
-          if(i > 0){
+          } else {
             rr->next = rr_new;
             rr = rr_new;
           }
@@ -828,9 +917,7 @@ void resolver_process(struct Message* msg)
           if(i == 0){
             rr = rr_new;
             msg->answers = rr;
-          }
-
-          if(i > 0){
+          } else {
             rr->next = rr_new;
             rr = rr_new;
           }
@@ -843,54 +930,189 @@ void resolver_process(struct Message* msg)
         break;
       }
       case CNAME_Resource_RecordType:
-        rc = get_CNAME_Record(&(rr->rd_data.cname_record.name), q->qName);
-        if (rc < 0)
-        {
-          free(rr->name);
-          free(rr);
-          goto next;
-        }
-        rr->rd_length = strlen(rr->rd_data.cname_record.name) + 2; // 1: name length; 1: 0x00 end
-        break;
-      case MX_Resource_RecordType:
-        rc = get_MX_Record(&(rr->rd_data.mx_record.exchange), q->qName);
-        if (rc < 0)
-        {
-          free(rr->name);
-          free(rr);
-          goto next;
-        }
-        rr->rd_length = strlen(rr->rd_data.mx_record.exchange) + 4;
-        rr->rd_data.mx_record.preference = 0x01;
-        break;
-      case SOA_Resource_RecordType:
-        rc = get_SOA_Record(&(rr->rd_data.soa_record.MName),&(rr->rd_data.soa_record.RName), q->qName);
-        if (rc < 0)
-        {
-          free(rr->name);
-          free(rr);
-          goto next;
-        }
-        rr->rd_data.soa_record.serial = 0x01;
-        rr->rd_data.soa_record.refresh = 0x02;
-        rr->rd_data.soa_record.retry = 0x03;
-        rr->rd_data.soa_record.expire = 0x04;
-        rr->rd_data.soa_record.minimum = 0x05;
-        rr->rd_length = strlen(rr->rd_data.soa_record.MName) + strlen(rr->rd_data.soa_record.RName) + 4 + 4 * 5;
-      break;
-      case NS_Resource_RecordType:
-        rc = get_NS_Record(&(rr->rd_data.name_server_record.name), q->qName);
-        if (rc < 0)
-        {
-          free(rr->name);
-          free(rr);
-          goto next;
-        }
-        rr->rd_length = strlen(rr->rd_data.name_server_record.name) + 2; // 1: name length; 1: 0x00 end
-        break;
+      {
+        cname_record* record_cname_arr = get_CNAME_Record(&rc, q->qName);
 
-      break;
- 
+        if (rc <= 0)
+        {
+          goto next;
+        }
+
+        msg->anCount = rc;
+
+        for (int i = 0; i < rc; i++)
+        {
+          struct ResourceRecord* rr_new = (struct ResourceRecord*)calloc(1, sizeof(struct ResourceRecord));
+
+          rr_new->name = strdup(q->qName);
+          rr_new->type = q->qType;
+          rr_new->class = q->qClass;
+
+          rr_new->ttl = (record_cname_arr + i)->ttl; 
+
+          rr_new->rd_data.cname_record.name = (char*)calloc((record_cname_arr + i)->name_len, sizeof(char));
+          memcpy(rr_new->rd_data.cname_record.name, (record_cname_arr + i)->name, (record_cname_arr + i)->name_len);
+
+          rr_new->rd_length = (record_cname_arr + i)->name_len + 2; //  1: name length; 1: 0x00 end
+
+          rr_new->next = NULL;
+
+          if(i == 0){
+            rr = rr_new;
+            msg->answers = rr;
+          } else {
+            rr->next = rr_new;
+            rr = rr_new;
+          }
+
+        }
+
+        free(record_cname_arr);
+        record_cname_arr = NULL;
+
+        break;
+      }
+      case MX_Resource_RecordType:
+      {
+        mx_record* record_arr = get_MX_Record(&rc, q->qName);
+
+        if (rc <= 0)
+        {
+          goto next;
+        }
+
+        msg->anCount = rc;
+
+        for (int i = 0; i < rc; i++)
+        {
+          struct ResourceRecord* rr_new = (struct ResourceRecord*)calloc(1, sizeof(struct ResourceRecord));
+
+          rr_new->name = strdup(q->qName);
+          rr_new->type = q->qType;
+          rr_new->class = q->qClass;
+
+          rr_new->ttl = (record_arr + i)->ttl; 
+
+          rr_new->rd_data.mx_record.preference = (record_arr + i)->preference; 
+
+          rr_new->rd_data.mx_record.exchange = (char*)calloc((record_arr + i)->exchange_len, sizeof(char));
+          memcpy(rr_new->rd_data.mx_record.exchange, (record_arr + i)->exchange, (record_arr + i)->exchange_len);
+
+          rr_new->rd_length = (record_arr + i)->exchange_len + 4; // 1: name length; 1: 0x00 end 2: preference(uint16_t)
+
+          rr_new->next = NULL;
+
+          if(i == 0){
+            rr = rr_new;
+            msg->answers = rr;
+          } else {
+            rr->next = rr_new;
+            rr = rr_new;
+          }
+
+        }
+
+        free(record_arr);
+        record_arr = NULL;
+
+        break;
+      }
+      case SOA_Resource_RecordType:
+      {
+        soa_record* record_arr = get_SOA_Record(&rc, q->qName);
+
+        if (rc <= 0)
+        {
+          goto next;
+        }
+
+        msg->anCount = rc;
+
+        for (int i = 0; i < rc; i++)
+        {
+          struct ResourceRecord* rr_new = (struct ResourceRecord*)calloc(1, sizeof(struct ResourceRecord));
+
+          rr_new->name = strdup(q->qName);
+          rr_new->type = q->qType;
+          rr_new->class = q->qClass;
+
+          rr_new->ttl = (record_arr + i)->ttl; 
+
+          rr_new->rd_data.soa_record.serial = (record_arr + i)->serial;
+          rr_new->rd_data.soa_record.refresh = (record_arr + i)->refresh;
+          rr_new->rd_data.soa_record.retry = (record_arr + i)->retry;
+          rr_new->rd_data.soa_record.expire = (record_arr + i)->expire;
+          rr_new->rd_data.soa_record.minimum = (record_arr + i)->minimum;
+
+          rr_new->rd_data.soa_record.MName = (char*)calloc((record_arr + i)->MName_len, sizeof(char));
+          memcpy(rr_new->rd_data.soa_record.MName, (record_arr + i)->MName, (record_arr + i)->MName_len);
+
+          rr_new->rd_data.soa_record.RName = (char*)calloc((record_arr + i)->RName_len, sizeof(char));
+          memcpy(rr_new->rd_data.soa_record.RName, (record_arr + i)->RName, (record_arr + i)->RName_len);
+
+          rr_new->rd_length = (record_arr + i)->MName_len + (record_arr + i)->RName_len + 4 + 4 * 5; // 4: uint32_t (ttl); 4 * 5: uint32_t * 5;
+
+          rr_new->next = NULL;
+
+          if(i == 0){
+            rr = rr_new;
+            msg->answers = rr;
+          } else {
+            rr->next = rr_new;
+            rr = rr_new;
+          }
+
+        }
+
+        free(record_arr);
+        record_arr = NULL;
+
+        break;
+      }
+      case NS_Resource_RecordType:
+      {
+        ns_record* record_arr = get_NS_Record(&rc, q->qName);
+
+        if (rc <= 0)
+        {
+          goto next;
+        }
+
+        msg->anCount = rc;
+
+        for (int i = 0; i < rc; i++)
+        {
+          struct ResourceRecord* rr_new = (struct ResourceRecord*)calloc(1, sizeof(struct ResourceRecord));
+
+          rr_new->name = strdup(q->qName);
+          rr_new->type = q->qType;
+          rr_new->class = q->qClass;
+
+          rr_new->ttl = (record_arr + i)->ttl; 
+
+          rr_new->rd_data.name_server_record.name = (char*)calloc((record_arr + i)->name_len, sizeof(char));
+          memcpy(rr_new->rd_data.name_server_record.name, (record_arr + i)->name, (record_arr + i)->name_len);
+
+          rr_new->rd_length = (record_arr + i)->name_len + 2; // 1: name length; 1: 0x00 end
+
+          rr_new->next = NULL;
+
+          if(i == 0){
+            rr = rr_new;
+            msg->answers = rr;
+          } else {
+            rr->next = rr_new;
+            rr = rr_new;
+          }
+
+        }
+
+        free(record_arr);
+        record_arr = NULL;
+
+        break;
+      }
+
       /*      
       case PTR_Resource_RecordType:
       */
@@ -1031,12 +1253,45 @@ void free_resource_records(struct ResourceRecord* rr)
 
   while (rr) {
 
-    if(rr->type == TXT_Resource_RecordType)
+    switch(rr->type)
     {
-      free(rr->rd_data.txt_record.txt_data);
-      rr->rd_data.txt_record.txt_data = NULL;
-    }
+      case TXT_Resource_RecordType:
+      {
+        free(rr->rd_data.txt_record.txt_data);
+        rr->rd_data.txt_record.txt_data = NULL;
+        break;
+      }
+      case CNAME_Resource_RecordType:
+      {
+        free(rr->rd_data.cname_record.name);
+        rr->rd_data.cname_record.name = NULL;
+        break;
+      }
+      case MX_Resource_RecordType:
+      {
+        free(rr->rd_data.mx_record.exchange);
+        rr->rd_data.mx_record.exchange = NULL;
+        break;
+      }
+      case SOA_Resource_RecordType:
+      {
+        free(rr->rd_data.soa_record.MName);
+        rr->rd_data.soa_record.MName = NULL;
 
+        free(rr->rd_data.soa_record.RName);
+        rr->rd_data.soa_record.RName = NULL;
+        break;
+      }
+      case NS_Resource_RecordType:
+      {
+        free(rr->rd_data.name_server_record.name);
+        rr->rd_data.name_server_record.name = NULL;
+        break;
+      }
+      default:
+        printf("\n no need specified inner free \n");
+    }
+ 
     free(rr->name);
     next = rr->next;
     free(rr);
@@ -1511,6 +1766,60 @@ int main()
 //   if (strcmp("txt.bar.com", domain_name) == 0)
 //   {
 //     *addr = "abcdefg";
+//     return 0;
+//   }
+//   else
+//   {
+//     return -1;
+//   }
+// }
+
+// int get_CNAME_Record(char **name, const char domain_name[])
+// {
+//   if (strcmp("cname.bar.com", domain_name) == 0)
+//   {
+//     *name = "abc.efg.com";
+//     return 0;
+//   }
+//   else
+//   {
+//     return -1;
+//   }
+// }
+
+// int get_MX_Record(char **exchange, const char domain_name[])
+// {
+//   if (strcmp("mx.bar.com", domain_name) == 0)
+//   {
+//     *exchange = "abc.efg.com";
+//     return 0;
+//   }
+//   else
+//   {
+//     return -1;
+//   }
+// }
+
+
+// int get_SOA_Record(char **MName, char **RName,const char domain_name[])
+// {
+//   if (strcmp("soa.bar.com", domain_name) == 0)
+//   {
+//     *MName = "ns.xxx.com";
+//     *RName = "admin.xxx.com";
+//     return 0;
+//   }
+//   else
+//   {
+//     return -1;
+//   }
+// }
+
+// int get_NS_Record(char **name, const char domain_name[])
+// {
+//   if (strcmp("bar.com", domain_name) == 0)
+//   {
+//     *name = "ns1.abc.com";
 //     return 0;
 //   }
 //   else
